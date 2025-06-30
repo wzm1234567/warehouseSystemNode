@@ -39,37 +39,22 @@ router.get("/menu", async (req, res) => {
         });
       }
     });
-    // console.log(newlist);
     res.send({ code: 0, msg: "获取菜单成功", data: newlist })
   } catch (error) {
     res.send({ code: 500, msg: "服务器错误" })
   }
 });
 
-
 // 添加左侧菜单列表
-
 router.post("/setmenu", async (req, res) => {
-  req.body.region = Number(req.body.region)
-  console.log(req.body.path.split('/'));
+  let index = req.body.region.length - 1
   try {
-    let add = await db.sqlConnection("insert into menu (title,path,pid,icon,component,name) values(?,?,?,?,?,?)", [req.body.title, req.body.path, req.body.region, req.body.icon, req.body.address, req.body.path.split('/')[1]])
-    console.log(add);
-    console.log(add.insertId);
-    let add1 = await db.sqlConnection("insert into think_role_menu (role_id,menu_id) values(?,?)", [2, add.insertId])
-    console.log(add1);
-
+    let add = await db.sqlConnection("insert into menu (title,path,pid,icon,component,name) values(?,?,?,?,?,?)", [req.body.title, req.body.path, req.body.region[index], req.body.icon, req.body.address, req.body.path.split('/')[1]])
+    await db.sqlConnection("insert into think_role_menu (role_id,menu_id) values(?,?)", [2, add.insertId])
     res.send({ code: 0, msg: '添加成功' })
   } catch (error) {
     res.send({ code: -1, data: [], msg: error.message })
   }
-
-
-
-
-
-
-
 })
 
 
