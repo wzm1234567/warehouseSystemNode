@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./app.js"
+    "dev": "node ./app.js",
+    "start": "NODE_ENV=production node ./app.js"
   },
   "dependencies": {
     "@escook/express-joi": "^1.1.1",
@@ -12,6 +13,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
+    "dotenv": "^17.2.3",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "express-jwt": "^8.4.1",
@@ -28,5 +30,8 @@
   },
   "volta": {
     "node": "16.20.2"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

@@ -2,8 +2,6 @@ const express = require('express')
 const router = express.Router()
 const db = require('../db')
 
-
-
 const multer = require('multer')  // 引入multer中间件处理上传文件的中间件
 const path = require('path') // path获取当前文件的路径
 

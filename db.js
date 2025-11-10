@@ -1,10 +1,11 @@
 const mysql = require("mysql2");
+const config = require('./config');
 
 const db = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "users",
+  host: config.db.host,
+  user: config.db.user,
+  password: config.db.password,
+  database: config.db.database,
   charset: "utf8mb4", // 或其他适合的字符集
   connectionLimit: 10, // 连接池大小（可选）
 });
