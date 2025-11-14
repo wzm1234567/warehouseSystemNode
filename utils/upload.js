@@ -8,7 +8,7 @@ const fs = require("fs");
 // })
 // 创建接收文件夹, 下面这一句放在创建服务器下面(删除这段注释)
 // const upload = multer({ dest: path.join(__dirname, 'uploads') })
-console.log(path, "path获取当前文件的路径");
+console.log(path.resolve(__dirname, "../public/upload"), "path获取当前文件的路径");
 // 确保目录存在（已确认）
 const uploadDir = path.resolve(__dirname, "../public/upload");
 if (!fs.existsSync(uploadDir)) {
@@ -42,7 +42,10 @@ router.post("/uploadImage", upload.single("file"), async (req, res) => {
     // 前端要以form-data数据传递，后端要打开解析form-data数据的中间件
     return res.status(400).send("No file uploaded.");
   }
-  const url = `/upload/${req.file.filename}`; // 拼接好图片路径返回给前端
+  // 拼接完整URL
+  const protocol = req.protocol; // http 或 https
+  const host = req.get("host");  // 主机名+端口，如 localhost:3000 或 example.com
+  const url = `${protocol}://${host}/upload/${req.file.filename}`; // 拼接好图片路径返回给前端
   console.log(req.file);
   res.send({
     code: 0,

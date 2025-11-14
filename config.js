@@ -4,7 +4,7 @@ require("dotenv").config({
 }); // 在应用入口顶部加载一次
 
 const config = {
-  port: process.env.PORT,
+  port: process.env.APP_PORT,
   nodeEnv: process.env.NODE_ENV,
   // 数据库
   db: {

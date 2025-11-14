@@ -4,9 +4,8 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const cors = require("cors");
-var session = require("express-session");
+
 // const redisClient = require('redis').createClient();
-// const RedisStore = require('connect-redis')(session);
 
 const { expressjwt: expressJWT } = require("express-jwt");
 
@@ -26,6 +25,8 @@ var clientRouter = require("./routes/client");
 // 实例化对象
 var app = express();
 
+// 静态资源目录
+app.use('/upload', express.static(path.resolve(__dirname, './public/upload'), { fallthrough: false }));
 app.use(express.json());
 
 // view engine setup
@@ -35,17 +36,19 @@ app.set("view engine", "ejs");
 app.use(logger("dev"));
 // 处理post请求
 
-app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// 静态资源目录
-app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cors()); // 解决跨域问题
 
 app.use(
   expressJWT({ secret: secretKey, algorithms: ["HS256"] }).unless({
-    path: ["/login/login", "/users/register", "/login/captcha"],
+    path: [
+      "/login/login", 
+      "/users/register", 
+      "/login/captcha", 
+      "/upload"
+    ]
   })
 );
 
@@ -72,22 +75,6 @@ app.all("*", (req, res, next) => {
   }
 });
 app.use(cookieParser());
-app.use(
-  session({
-    name: "your-secret-key", //key名，默认为connect.id
-    secret: "your-secret-key", // 对session id 相关的cookie进行签名
-    rolling: true, //强制在每一个response中都发送session标识符的cookie。如果设置了rolling为true，同时saveUninitialized为true，那么每一个请求都会发送没有初始化的session
-    resave: false, // 强制session保存到session store中
-    saveUninitialized: false, // // 强制没有“初始化”的session保存到storage中，如果是要实现登陆的session那么最好设置为false
-    unset: "destroy",
-    cookie: {
-      // httpOnly:true,
-      secure: false, // 设置为true，需要https的协议
-      maxAge: 30000, // 设置 session 的有效时间，单位毫秒
-    },
-    // store: new RedisStore({ client: redisClient }),
-  })
-);
 
 // 路由匹配
 app.use("/", indexRouter);
@@ -131,7 +118,7 @@ var http = require("http");
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || "3000");
+var port = normalizePort(process.env.APP_PORT);
 
 app.set("port", port);
 console.log(process.env.PORT);
