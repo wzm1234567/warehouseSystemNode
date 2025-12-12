@@ -24,7 +24,7 @@ router.post("/login", async function (req, res) {
   // if(user[0].username != req.body.username) return res.send({ code: -1, msg: "用户名错误", data: [] })
   if (!bcrypt.compareSync(req.body.password, user[0].password)) return res.send({ code: -1, msg: "密码错误", data: [] })
   await redis.set('username', req.body.username);
-  res.send({ code: 1, msg: "登录成功", data: { token: jwt.sign({ username: req.body.username }, secretKey, { expiresIn: "24h", }), user: user[0], }, });
+  res.send({ code: 0, msg: "登录成功", data: { token: jwt.sign({ username: req.body.username }, secretKey, { expiresIn: "24h", }), user: user[0], }, });
 });
 
 // 验证码接口

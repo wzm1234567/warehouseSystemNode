@@ -6,6 +6,7 @@ require("dotenv").config({
 const config = {
   port: process.env.APP_PORT,
   nodeEnv: process.env.NODE_ENV,
+  watch: process.env.WATCH,
   // 数据库
   db: {
     host: process.env.DB_HOST,

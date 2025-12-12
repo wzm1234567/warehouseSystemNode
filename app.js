@@ -89,6 +89,10 @@ app.use("/admin", materialRouter);
 app.use("/admin", clientRouter);
 app.use("/file", require("./utils/upload"));
 app.use("/checkBills", require("./routes/checkBills"));
+app.use("/role", require("./routes/role"));
+app.use("/dict", require("./routes/dict"));
+app.use("/sys", require("./utils/dict"));
+app.use("/picture", require("./routes/picture"));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

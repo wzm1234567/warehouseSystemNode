@@ -1,95 +1,121 @@
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise"); // ✅ 改用 promise 版本
 const config = require('./config');
-
-const db = mysql.createPool({
+console.log(config);
+const pool = mysql.createPool({
   host: config.db.host,
   user: config.db.user,
+  port: 3306,
   password: config.db.password,
   database: config.db.database,
-  charset: "utf8mb4", // 或其他适合的字符集
-  connectionLimit: 10, // 连接池大小（可选）
+  charset: "utf8mb4",
+  
+  // ✅ 正确的连接池配置选项
+  connectionLimit: 10,             // 连接池大小
+  queueLimit: 0,                   // 无限制排队
+  waitForConnections: true,        // 等待可用连接
+  
+  // ✅ 正确的超时配置（mysql2/promise 版本）
+  connectTimeout: 30000,           // 连接超时 30秒
+  
+  
+  // ✅ 连接生命周期管理
+  maxIdle: 10000,                  // 最大空闲时间
+  idleTimeout: 60000,              // 空闲超时
+  
+  /**
+  // ✅ 连接选项
+  multipleStatements: false, // 禁止多语句查询（安全）
+  namedPlaceholders: false,  // 不使用命名参数
+  decimalNumbers: true,      // 返回 decimal 为数字
+  dateStrings: false,        // 返回 Date 对象
+  stringifyObjects: false,   // 不字符串化对象
+  supportBigNumbers: true,   // 支持大数字
+  bigNumberStrings: true,    // 大数字作为字符串返回
+  */
 });
 
-// 数据库封装   sql:sql语句  params:参数 promise:返回promise对象 then方法
+// 连接池错误监听
+pool.on('error', (err) => {
+  console.error('连接池错误:', err.code);
+  if (err.code === 'ECONNRESET') {
+    console.log('检测到连接重置，连接池自动恢复中...');
+  }
+});
 
-const sqlConnection = (sql, params) => {
-  return new Promise((resolve, reject) => {
-    db.getConnection((err, connection) => {
-      if (err) {
-        console.log("数据库连接失败", err);
-        reject(err);
-        return;
-      } else {
-        console.log("数据库连接成功");
-      }
+/**
+ * 数据库连接健康检查
+ */
+const checkDatabaseHealth = async () => {
+  try {
+    const [result] = await pool.execute('SELECT 1 as health_check');
+    console.log('✅ 数据库连接健康检查通过');
+    return true;
+  } catch (error) {
+    console.error('❌ 数据库健康检查失败:', error.message);
+    return false;
+  }
+};
 
-      connection.query(sql, params, (err, result) => {
-        if (err) {
-          console.log("数据库编码设置失败", err);
-          reject(err);
-          return;
-        } else {
-          resolve(result);
-          console.log("数据库编码设置成功");
-          connection.release();
-        }
-      });
-    });
-  });
+/**
+ * 获取连接池状态
+ */
+const getPoolStatus = () => {
+  return {
+    totalConnections: pool._allConnections.length,
+    freeConnections: pool._freeConnections.length,
+    waitingAcquires: pool._acquiringConnections.length
+  };
 };
 
 
-
-const executeTransaction = (queries) => {
-  return new Promise((resolve, reject) => {
-    db.getConnection((err, connection) => {
-      if (err) {
-        console.log("数据库连接失败", err);
-        reject(err);
-        return;
-      } else {
-        console.log("数据库连接成功");
-        connection.beginTransaction((err) => {
-          if (err) {
-            return reject("开启事务失败: ", err);
-          }
-
-          for (let i = 0; i < queries.length; i++) {
-            connection.query(queries[i].sql, queries[i].params, (err, result) => {
-              if (err) {
-                return connection.rollback(() => {
-                  console.log("数据库编码设置失败，事务回滚成功", err);
-                  return reject(err);
-                });
-              } else {
-                console.log("数据库编码设置成功");
-                connection.release();
-                if (i === queries.length - 1) {
-                  connection.commit((err) => {
-                    if (err) {
-                      return connection.rollback(() => {
-                        console.log("事务提交失败，事务回滚成功");
-                        reject(err);
-                      });
-                    }
-                    console.log("事务提交成功");
-                    resolve("事务提交成功");
-                  });
-                }
-              }
-            }
-            );
-          }
-        });
-      }
-    });
-  });
+/**
+ * 执行SQL查询（自动管理连接）
+ * @param {string} sql - SQL语句
+ * @param {Array} params - 参数
+ * @returns {Promise}
+ */
+const sqlConnection = async (sql, params) => {
+  try {
+    const [rows] = await pool.execute(sql, params);
+    console.log("查询成功:", sql.substring(0, 50), "...");
+    return rows;
+  } catch (error) {
+    console.error("查询失败:", error.message);
+    throw error;
+  }
 };
 
+/**
+ * 执行事务（自动管理连接）
+ * @param {Array} queries - [{sql, params}]
+ * @returns {Promise}
+ */
+const executeTransaction = async (queries) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    console.log("事务开始");
 
+    // ✅ 使用 for...of 保证顺序执行
+    for (const query of queries) {
+      await connection.execute(query.sql, query.params);
+      console.log("执行成功:", query.sql.substring(0, 50), "...");
+    }
 
+    await connection.commit();
+    console.log("事务提交成功");
+    return { success: true };
+  } catch (error) {
+    await connection.rollback();
+    console.error("事务回滚:", error.message);
+    throw error;
+  } finally {
+    // ✅ 确保无论成功失败都会释放连接
+    connection.release();
+    console.log("连接已释放");
+  }
+};
 
+checkDatabaseHealth()
 
-sqlConnection("select 1").then((res) => console.log(res));
-
-module.exports = { db, sqlConnection, executeTransaction };
+module.exports = { pool, sqlConnection, executeTransaction };

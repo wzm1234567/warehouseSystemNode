@@ -28,7 +28,7 @@ router.get("/getbills", async (req, res) => {
       message: "操作成功",
     });
   } catch (err) {
-    res.send({ code: 1, data: err, message: "操作失败" });
+    res.send({ code: 1, data: [], message: err.message });
   }
 });
 
@@ -42,10 +42,10 @@ router.post("/addbills", (req, res) => {
     req.body.date,
     req.body.fahoprice,
     req.body.fahuodunshu,
-    req.body.fapiaodingdan,
+    req.body.fapiaodingdan || "",
     req.body.pinzhong,
     req.body.plate,
-    req.body.remark,
+    req.body.remark || "",
     req.body.shijijiaoyidunshu,
     req.body.shijijiaoyie,
   ])
@@ -53,7 +53,7 @@ router.post("/addbills", (req, res) => {
       res.send({ code: 0, data: [], message: "添加成功" });
     })
     .catch((err) => {
-      res.send({ code: 1, data: err, message: "添加失败" });
+      res.send({ code: -1, data: err, message: "添加失败" });
     });
 });
 

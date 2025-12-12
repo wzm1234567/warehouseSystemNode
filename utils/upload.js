@@ -3,11 +3,7 @@ const router = express.Router();
 const multer = require("multer"); // 引入multer中间件处理上传文件的中间件
 const path = require("path"); // path获取当前文件的路径
 const fs = require("fs");
-// const upload = multer({
-//     dest: path.resolve(__dirname, '../public', "uploads")
-// })
-// 创建接收文件夹, 下面这一句放在创建服务器下面(删除这段注释)
-// const upload = multer({ dest: path.join(__dirname, 'uploads') })
+
 console.log(path.resolve(__dirname, "../public/upload"), "path获取当前文件的路径");
 // 确保目录存在（已确认）
 const uploadDir = path.resolve(__dirname, "../public/upload");
