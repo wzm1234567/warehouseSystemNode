@@ -21,11 +21,12 @@ router.get("/menu", async (req, res) => {
         }
       });
     });
-    // console.log(list);
     let newlist = list.filter((item) => item.pid == 0 && item.hide === 0);
     newlist.sort((a, b) => (a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0));
     // 筛选非隐藏的子菜单
     let newMenulist = list.filter((item) => item.hide === 0 && item.type === 0 && item.pid !== 0)
+    // console.log(newMenulist);
+    
     // 筛选按钮权限
     let newMenubnt = list.filter((item) => item.hide === 0 && item.type === 1);
     for (let index = 0; index < newMenulist.length; index++) {

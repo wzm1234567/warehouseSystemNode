@@ -4,7 +4,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const cors = require("cors");
-
+var os = require("os");
 // const redisClient = require('redis').createClient();
 
 const { expressjwt: expressJWT } = require("express-jwt");
@@ -38,7 +38,6 @@ app.use(logger("dev"));
 
 app.use(express.urlencoded({ extended: false }));
 
-
 app.use(cors()); // 解决跨域问题
 
 app.use(
@@ -47,7 +46,8 @@ app.use(
       "/login/login", 
       "/users/register", 
       "/login/captcha", 
-      "/upload"
+      "/upload",
+      "/aiot/waterDataChange"
     ]
   })
 );
@@ -55,7 +55,6 @@ app.use(
 app.all("*", (req, res, next) => {
   let origin = req.headers.origin;
   console.log(origin);
-
   //设置允许任何域访问
   res.header("Access-Control-Allow-Origin", origin ? origin : "*"); // 指定允许访问该资源的外域URL，若设置为 *，则允许所有访问，如下仅支持来自http://127.0.0.1:3000的请求。
   //设置  允许任何 数据类型
@@ -93,6 +92,8 @@ app.use("/role", require("./routes/role"));
 app.use("/dict", require("./routes/dict"));
 app.use("/sys", require("./utils/dict"));
 app.use("/picture", require("./routes/picture"));
+app.use("/openAi", require("./routes/openAi"));
+app.use("/aiot", require("./routes/tianYiAiot/monitorData"));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -115,32 +116,21 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
-// var debug = require("debug")("myweb:server");
 var http = require("http");
-
-/**
- * Get port from environment and store in Express.
- */
-
 var port = normalizePort(process.env.APP_PORT);
-
 app.set("port", port);
-console.log(process.env.PORT);
-
-// /**
-//  * Create HTTP server.
-//  */
-
 var server = http.createServer(app);
+server.listen(port, () => {
+  var addr = server.address();
+  var localIP = getLocalIP();
+  console.log("=================================");
+  console.log("服务已启动");
+  console.log("端口: " + addr.port);
+  console.log("本机访问: http://localhost:" + addr.port);
+  console.log("局域网访问: http://" + localIP + ":" + addr.port);
+  console.log("=================================");
+});
 
-// /**
-//  * Listen on provided port, on all network interfaces.
-//  */
-
-server.listen(port);
-
-// server.on("error", onError);
-// server.on("listening", onListening);
 
 // /**
 //  * Normalize a port into a number, string, or false.
@@ -148,20 +138,28 @@ server.listen(port);
 
 function normalizePort(val) {
   var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
+  if (isNaN(port))return val
+  if (port >= 0)  return port
   return false;
 }
 
+
+// 获取本机 IPv4 地址
+function getLocalIP() {
+    var interfaces = os.networkInterfaces();
+    for (var devName in interfaces) {
+        var iface = interfaces[devName];
+        for (var i = 0; i < iface.length; i++) {
+            var alias = iface[i];
+            if (alias.family === "IPv4" && 
+                alias.address !== "127.0.0.1" && 
+                !alias.internal) {
+                return alias.address;
+            }
+        }
+    }
+    return "127.0.0.1";
+}
 // /**
 //  * Event listener for HTTP server "error" event.
 //  */
